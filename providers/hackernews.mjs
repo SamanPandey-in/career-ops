@@ -33,6 +33,19 @@ function extractUrl(text) {
   return m ? m[0].replace(/[.,;!?)]+$/, '') : '';
 }
 
+// Named HTML entities we decode in comment bodies. Kept in single map
+/** @type {Record<string, string>} */
+const ENTITY_MAP = {
+  '&amp;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&#x27;': "'",
+  '&#39;': "'",
+  '&nbsp;': ' ',
+};
+const ENTITY_RE = /&amp;|&lt;|&gt;|&quot;|&#x27;|&#39;|&nbsp;/g;
+
 /**
  * Parse a single HN comment text into a normalized job object.
  * The canonical format is "Company | Role | Location | URL" on the first line,
@@ -57,12 +70,7 @@ export function parseHnComment(text, threadUrl = '') {
     .replace(/<a\s[^>]*href="([^"]+)"[^>]*>.*?<\/a>/gi, (_, href) => href)
     .replace(/<\/?(?:p|br|div|li|h[1-6])\b[^>]*>/gi, '\n')
     .replace(/<[^>]+>/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#x27;/g, "'")
-    .replace(/&nbsp;/g, ' ')
+    .replace(ENTITY_RE, (m) => ENTITY_MAP[m])
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n');
 
